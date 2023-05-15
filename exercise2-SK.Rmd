@@ -1,5 +1,5 @@
 ---
-title: "Exercise2-SK"
+title: "Exercise 2"
 output: github_document
 ---
 
@@ -9,6 +9,8 @@ library(tidyverse)
 library(lubridate)
 library(arrow)
 ```
+
+### Sameer Kamal
 
 ## Load data
 
@@ -21,7 +23,6 @@ Load the following data:
 data_path <- "/Users/sameerkamal/Desktop/MBA/McGill - Work/People Analytics/"
 applications <- read_parquet(paste0(data_path,"app_data_sample.parquet"))
 
-applications
 ```
 
 ## Get gender for examiners
@@ -38,7 +39,6 @@ library(gender)
 examiner_names <- applications %>% 
   distinct(examiner_name_first)
 
-examiner_names
 ```
 
 Now let's use function `gender()` as shown in the example for the package to attach a gender and probability to each name and put the results into the table `examiner_names_gender`
@@ -54,7 +54,6 @@ examiner_names_gender <- examiner_names %>%
     proportion_female
   )
 
-examiner_names_gender
 ```
 
 Finally, let's join that table back to our original applications data and discard the temporary tables we have just created to reduce clutter in our environment.
@@ -87,7 +86,6 @@ examiner_surnames <- applications %>%
   select(surname = examiner_name_last) %>% 
   distinct()
 
-examiner_surnames
 ```
 We'll follow the instructions for the package outlined here [https://github.com/kosukeimai/wru](https://github.com/kosukeimai/wru).
 
@@ -95,7 +93,6 @@ We'll follow the instructions for the package outlined here [https://github.com/
 examiner_race <- predict_race(voter.file = examiner_surnames, surname.only = T) %>% 
   as_tibble()
 
-examiner_race
 ```
 
 As you can see, we get probabilities across five broad US Census categories: white, black, Hispanic, Asian and other. (Some of you may correctly point out that Hispanic is not a race category in the US Census, but these are the limitations of this package.)
@@ -114,7 +111,6 @@ examiner_race <- examiner_race %>%
     TRUE ~ NA_character_
   ))
 
-examiner_race
 ```
 
 Let's join the data back to the applications table.
@@ -143,7 +139,6 @@ library(lubridate) # to work with dates
 examiner_dates <- applications %>% 
   select(examiner_id, filing_date, appl_status_date) 
 
-examiner_dates
 ```
 
 The dates look inconsistent in terms of formatting. Let's make them consistent. We'll create new variables `start_date` and `end_date`.
@@ -165,7 +160,6 @@ examiner_dates <- examiner_dates %>%
     ) %>% 
   filter(year(latest_date)<2018)
 
-examiner_dates
 ```
 
 Joining back to the applications data.
@@ -230,7 +224,8 @@ ggplot(applications, aes(x = tc)) +
 
 ```{r plotting 3,echo=FALSE}
 ggplot(applications, aes(x = examiner_art_unit)) +
-  geom_histogram(binwidth = 10, fill = "blue") +
+  geom_histogram(binwidth = 10, fill = "pink") +
+  scale_y_continuous(labels = scales::comma_format())+
   ggtitle("Distribution across work group") +
   xlab("Work Group") +
   ylab("Frequency")+
@@ -252,4 +247,7 @@ model2 <- lm(formula = tenure_days ~ 1 + factor(gender) + factor(race)+factor(tc
 summary(model2)
 ```
 
-Based on the results above
+## Findings
+Based on the results above, we see that race and gender are statistically significant predictors of tenure at the patent office. For example, we see that men, on average, have a lower average tenure, and the same could be said of Hispanics when compared to other ethnicities. Looking at the distributions, however, we see that sample sizes vary considerably between genders and ethnicities. In addition, the low R-squared values demonstrate the model is not a good fit - there are either missing predictors or other predictors that better explain the model variation. 
+
+When we add technology centres to the model, we see a significant change in the coefficient for gender and an overall improvement in the adjusted R-squared. The change in adjusted R-squared shows that adding the new variables has genuinely improved the model fit, while the considerable change in the gender coefficient show that predictions previously attributed to gender may have more to do with differences in technology centres. It seems likely that there are significant differences in gender ratios in different technology centres.
