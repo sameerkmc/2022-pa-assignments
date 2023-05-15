@@ -178,25 +178,34 @@ gc()
 library(ggplot2)
 ```
 
+
+```{r testing}
+# Create a vector of labels
+cleaned <- applications %>%
+  distinct(examiner_id, .keep_all = TRUE) %>%
+  select(examiner_id, gender, race, tenure_days, tc, examiner_art_unit)
+```
+
 ```{r plotting,echo=FALSE}
-ggplot(applications)+
+
+ggplot(cleaned)+
   geom_bar(mapping = aes(x = gender), fill = "green")+
   ggtitle("Gender Distribution")+
   xlab("Gender")+
-  ylab("Frequency")+
+  ylab("Count")+
   theme_minimal()
-ggplot(applications)+
+ggplot(cleaned)+
   geom_bar(mapping = aes(x = race), fill = "purple")+
   scale_y_continuous(labels = scales::comma_format())+
   ggtitle("Race")+
   xlab("Race")+
-  ylab("Frequency")+
+  ylab("Count")+
   theme_minimal()
-ggplot(applications, aes(x = tenure_days), na.rm = TRUE) +
+ggplot(cleaned, aes(x = tenure_days), na.rm = TRUE) +
   geom_histogram(binwidth = 100, fill = "blue") +
   ggtitle("Tenure") +
   xlab("Tenure") +
-  ylab("Frequency")+
+  ylab("Count")+
   theme_minimal()
 ```
 
@@ -205,12 +214,12 @@ ggplot(applications, aes(x = tenure_days), na.rm = TRUE) +
 ```{r plotting 2,echo=FALSE}
 
 # Create a vector of labels
-ttc <- applications$tc
-labels <- unique(ttc)
+tttc <- cleaned$tc
+labels <- unique(tttc)
 x_labels <- paste0("TC", labels)
 
 # Create a bar chart with custom x-axis labels
-ggplot(applications, aes(x = tc)) + 
+ggplot(cleaned, aes(x = tc)) + 
   geom_bar(fill = "red") +
   scale_x_continuous(breaks = labels, labels = x_labels)+
   scale_y_continuous(labels = scales::comma_format())+
@@ -223,7 +232,7 @@ ggplot(applications, aes(x = tc)) +
 ## Visualizing distribution across work groups
 
 ```{r plotting 3,echo=FALSE}
-ggplot(applications, aes(x = examiner_art_unit)) +
+ggplot(cleaned, aes(x = examiner_art_unit)) +
   geom_histogram(binwidth = 10, fill = "pink") +
   scale_y_continuous(labels = scales::comma_format())+
   ggtitle("Distribution across work group") +
@@ -234,7 +243,7 @@ ggplot(applications, aes(x = examiner_art_unit)) +
 
 ## Correlating gender and race with tenure (excluding Technology Centre)
 ```{r corr,echo=FALSE}
-model1 <- lm(formula = tenure_days ~ 1 + factor(gender) + factor(race), data=applications)
+model1 <- lm(formula = tenure_days ~ 1 + factor(gender) + factor(race), data=cleaned)
 
 summary(model1)
 ```
@@ -242,7 +251,7 @@ summary(model1)
 ## Correlating gender and race with tenure and including Technology Centre
 
 ```{r corr 2,echo=FALSE}
-model2 <- lm(formula = tenure_days ~ 1 + factor(gender) + factor(race)+factor(tc), data=applications)
+model2 <- lm(formula = tenure_days ~ 1 + factor(gender) + factor(race)+factor(tc), data=cleaned)
 
 summary(model2)
 ```

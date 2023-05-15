@@ -32,8 +32,8 @@ and discard the temporary tables we have just created to reduce clutter
 in our environment.
 
     ##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-    ## Ncells  4441152 237.2    7872827 420.5         NA  4459825 238.2
-    ## Vcells 49378847 376.8   92843553 708.4      16384 79694514 608.1
+    ## Ncells  4441181 237.2    7872868 420.5         NA  4459866 238.2
+    ## Vcells 49378939 376.8   92843687 708.4      16384 79694626 608.1
 
 ## Guess the examiner’s race
 
@@ -67,8 +67,8 @@ And this one for `case_when()` function:
 Let’s join the data back to the applications table.
 
     ##            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)
-    ## Ncells  4626995 247.2    7872827 420.5         NA  6915089 369.4
-    ## Vcells 51723863 394.7   92843553 708.4      16384 91832951 700.7
+    ## Ncells  4627024 247.2    7872868 420.5         NA  6915122 369.4
+    ## Vcells 51723955 394.7   92843687 708.4      16384 91833060 700.7
 
 ## Examiner’s tenure
 
@@ -90,14 +90,21 @@ organization.
 Joining back to the applications data.
 
     ##            used  (Mb) gc trigger  (Mb) limit (Mb)  max used  (Mb)
-    ## Ncells  4635636 247.6    7872827 420.5         NA   7872827 420.5
-    ## Vcells 57798981 441.0  111492263 850.7      16384 111197021 848.4
+    ## Ncells  4635665 247.6    7872868 420.5         NA   7872868 420.5
+    ## Vcells 57799073 441.0  111492424 850.7      16384 111197669 848.4
 
 ## Visualizing gender, race and tenure distributions
 
+``` r
+# Create a vector of labels
+cleaned <- applications %>%
+  distinct(examiner_id, .keep_all = TRUE) %>%
+  select(examiner_id, gender, race, tenure_days, tc, examiner_art_unit)
+```
+
 ![](exercise2-SK_files/figure-gfm/plotting-1.png)<!-- -->![](exercise2-SK_files/figure-gfm/plotting-2.png)<!-- -->
 
-    ## Warning: Removed 25863 rows containing non-finite values (`stat_bin()`).
+    ## Warning: Removed 24 rows containing non-finite values (`stat_bin()`).
 
 ![](exercise2-SK_files/figure-gfm/plotting-3.png)<!-- -->
 
@@ -114,57 +121,57 @@ Joining back to the applications data.
     ## 
     ## Call:
     ## lm(formula = tenure_days ~ 1 + factor(gender) + factor(race), 
-    ##     data = applications)
+    ##     data = cleaned)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -5569.1  -564.8   542.2   796.2  1260.8 
+    ## -4572.5 -1293.0   479.5  1627.5  2447.8 
     ## 
     ## Coefficients:
     ##                      Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)          5575.113      2.057 2710.04   <2e-16 ***
-    ## factor(gender)male   -131.280      1.776  -73.90   <2e-16 ***
-    ## factor(race)black      94.490      4.846   19.50   <2e-16 ***
-    ## factor(race)Hispanic -358.624      5.078  -70.62   <2e-16 ***
-    ## factor(race)other     321.607     31.351   10.26   <2e-16 ***
-    ## factor(race)white      75.966      1.968   38.61   <2e-16 ***
+    ## (Intercept)           4500.34      64.49  69.789  < 2e-16 ***
+    ## factor(gender)male    -211.77      55.77  -3.797 0.000148 ***
+    ## factor(race)black       36.02     147.90   0.244 0.807612    
+    ## factor(race)Hispanic  -390.42     135.73  -2.876 0.004040 ** 
+    ## factor(race)other     1280.43    1262.35   1.014 0.310482    
+    ## factor(race)white      154.20      60.41   2.553 0.010717 *  
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 1090 on 1700642 degrees of freedom
-    ##   (317829 observations deleted due to missingness)
-    ## Multiple R-squared:  0.008426,   Adjusted R-squared:  0.008423 
-    ## F-statistic:  2890 on 5 and 1700642 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 1784 on 4822 degrees of freedom
+    ##   (821 observations deleted due to missingness)
+    ## Multiple R-squared:  0.007601,   Adjusted R-squared:  0.006572 
+    ## F-statistic: 7.387 on 5 and 4822 DF,  p-value: 6.553e-07
 
 ## Correlating gender and race with tenure and including Technology Centre
 
     ## 
     ## Call:
     ## lm(formula = tenure_days ~ 1 + factor(gender) + factor(race) + 
-    ##     factor(tc), data = applications)
+    ##     factor(tc), data = cleaned)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -5598.1  -586.0   462.1   779.3  1665.5 
+    ## -4888.5 -1242.9   436.1  1460.3  2919.6 
     ## 
     ## Coefficients:
-    ##                      Estimate Std. Error  t value Pr(>|t|)    
-    ## (Intercept)          5887.872      2.430 2423.443  < 2e-16 ***
-    ## factor(gender)male    -17.159      1.781   -9.635  < 2e-16 ***
-    ## factor(race)black     107.638      4.722   22.793  < 2e-16 ***
-    ## factor(race)Hispanic -398.776      4.950  -80.567  < 2e-16 ***
-    ## factor(race)other     219.608     30.554    7.187 6.61e-13 ***
-    ## factor(race)white     -38.761      1.980  -19.574  < 2e-16 ***
-    ## factor(tc)1700       -285.382      2.092 -136.400  < 2e-16 ***
-    ## factor(tc)2100       -348.374      2.514 -138.547  < 2e-16 ***
-    ## factor(tc)2400       -812.399      2.694 -301.518  < 2e-16 ***
+    ##                       Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)           5180.578     80.047  64.719  < 2e-16 ***
+    ## factor(gender)male      -3.673     55.821  -0.066  0.94754    
+    ## factor(race)black       52.959    143.579   0.369  0.71226    
+    ## factor(race)Hispanic  -391.014    131.758  -2.968  0.00302 ** 
+    ## factor(race)other     1066.437   1225.596   0.870  0.38427    
+    ## factor(race)white      -41.089     60.062  -0.684  0.49394    
+    ## factor(tc)1700        -532.046     73.818  -7.208 6.58e-13 ***
+    ## factor(tc)2100        -816.637     73.984 -11.038  < 2e-16 ***
+    ## factor(tc)2400       -1386.492     81.910 -16.927  < 2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 1062 on 1700639 degrees of freedom
-    ##   (317829 observations deleted due to missingness)
-    ## Multiple R-squared:  0.05884,    Adjusted R-squared:  0.05884 
-    ## F-statistic: 1.329e+04 on 8 and 1700639 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 1731 on 4819 degrees of freedom
+    ##   (821 observations deleted due to missingness)
+    ## Multiple R-squared:  0.0655, Adjusted R-squared:  0.06394 
+    ## F-statistic: 42.22 on 8 and 4819 DF,  p-value: < 2.2e-16
 
 ## Findings
 
