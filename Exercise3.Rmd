@@ -20,7 +20,7 @@ applications <-read_parquet(paste0(data_path,"exercise_3_applications.parquet"))
 
 ## Gender distribution across technology centres
 
-```{r gender-dist}
+```{r gender-dist, echo=FALSE}
 
 ggplot(data_set, aes(fill = gender, x = as.factor(tc))) + 
   geom_bar(position = "dodge") +
@@ -32,7 +32,7 @@ ggplot(data_set, aes(fill = gender, x = as.factor(tc))) +
 
 ## Race distribution across technology centres
 
-```{r race-dist}
+```{r race-dist, echo=FALSE}
 
 ggplot(data_set, aes(fill = race, x = as.factor(tc))) + 
   geom_bar(position = "dodge") +
@@ -44,7 +44,7 @@ ggplot(data_set, aes(fill = race, x = as.factor(tc))) +
 
 ## Tenure distribution across technology centres
 
-```{r tenure-alt}
+```{r tenure-alt, echo=FALSE}
 
 ggplot(data_set, aes(fill = as.factor(tc), x = tenure)) + 
   geom_histogram(binwidth = 365) +
@@ -55,6 +55,26 @@ ggplot(data_set, aes(fill = as.factor(tc), x = tenure)) +
   theme_minimal()+
   labs(fill = "Technology Centre")
 ```
+
+## Findings of distributions
+
+
+#### Gender
+
+There does seem to be a considerable imbalance between genders. While in certain TC's this could be due to the field itself, it is likely that the gender predicted is not correct. This may potentially be due to the presence of foreign names that the wru package is not able to process accurately.
+
+#### Race
+
+It is difficult to discern whether these distributions are accurate to the proportions of race. In particular, it is possible that those predicted as 'white' could actually be of another race but have a name that is more commonly associated with Caucasions.
+
+#### Tenure
+
+The distribution of tenure is interesting as there is heavy spike among most towards people who have been there for 16 years or more. However, this does not seem to be the case with Technology Centre 2400, which has a relatively even distribution across tenures.
+
+## Creating the linear model
+
+### With TC and Gender
+
 ```{r turnover, echo=FALSE}
 #converting appl_status_date to date
 applications <- applications %>%
@@ -112,7 +132,7 @@ training_set <- regression_data %>%
   anti_join(holdout_sample)
 ```
 
-```{r modeling-gender&tc}
+```{r modeling-gender&tc, echo=FALSE}
 #model
 model1 <- lm(data = training_set, left ~ gender + as.factor(tc))
 tidy(model1)
@@ -130,24 +150,40 @@ comparison_data <- comparison_data %>%
 #False negative rate (there are no positive predictions so the FPR is 0)
 confusion_matrix <- table(comparison_data$predictions, comparison_data$actuals)
 fnr <- prop.table(confusion_matrix["0", "1"])
-```
 
-```{r including-race}
+#False negative Rate
+
+fnr
+```
+## Findings
+
+With the size of the data set, we are not able to get any significantly valuable predictions. In the linear model, we also see that none of the predictors are statistically significant, and the overall R-squared is extremely low. One major reason for this could be that a linear regression is not suitable for making predictions for a binary outcome.
+
+### With race added
+
+```{r including-race, echo=FALSE}
 #model
 model2 <- lm(data = training_set, left ~ gender + as.factor(tc) + race)
-tidy(model1)
-summary(model1)
+tidy(model2)
+summary(model2)
 
 #checking prediction
 holdout_predictions2 <- predict(model2, newdata = holdout_sample)
 
 #comparing
 holdout_actuals2 <- holdout_sample$left
-comparison_data2 <- data.frame(actuals = holdout_actuals, predictions = holdout_predictions)
+comparison_data2 <- data.frame(actuals = holdout_actuals, predictions = holdout_predictions2)
 comparison_data2 <- comparison_data2 %>%
   mutate(predictions = if_else(predictions >= 0.5, 1, 0))
 
 #False negative rate (there are no positive predictions so the FPR is 0)
 confusion_matrix <- table(comparison_data2$predictions, comparison_data2$actuals)
 fnr2 <- prop.table(confusion_matrix["0", "1"])
+
+fnr2
+
 ```
+
+## Findings after adding race
+
+Adding race only slightly improves the accuracy of the model, however this is still not sufficient for making predictions on binary outcomes. In theory, this could be slightly improved by adjusting the thresholds for classification, however deciding on a suitable threshold is quite difficult.
