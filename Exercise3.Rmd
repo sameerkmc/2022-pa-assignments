@@ -1,0 +1,153 @@
+---
+title: "Exercise 3"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(arrow)
+library(ggplot2)
+library(broom)
+```
+
+```{r import saved data, echo=FALSE}
+data_path <- "/Users/sameerkamal/Desktop/MBA/McGill - Work/People Analytics/"
+data_set <- read_parquet(paste0(data_path,"exercise_3_data.parquet"))
+applications <-read_parquet(paste0(data_path,"exercise_3_applications.parquet"))
+```
+
+## Gender distribution across technology centres
+
+```{r gender-dist}
+
+ggplot(data_set, aes(fill = gender, x = as.factor(tc))) + 
+  geom_bar(position = "dodge") +
+  ggtitle("Gender distribution across technology centres") +
+  xlab("Technology centre") +
+  ylab("Frequency")+
+  theme_minimal()
+```
+
+## Race distribution across technology centres
+
+```{r race-dist}
+
+ggplot(data_set, aes(fill = race, x = as.factor(tc))) + 
+  geom_bar(position = "dodge") +
+  ggtitle("Race distribution across technology centres") +
+  xlab("Technology centre") +
+  ylab("Frequency")+
+  theme_minimal()
+```
+
+## Tenure distribution across technology centres
+
+```{r tenure-alt}
+
+ggplot(data_set, aes(fill = as.factor(tc), x = tenure)) + 
+  geom_histogram(binwidth = 365) +
+  ggtitle("Tenure distribution across technology centres") +
+  xlab("Tenure (years)") +
+  scale_x_continuous(labels = function(x) x / 365, breaks = seq(0, max(data_set$tenure, na.rm = TRUE), by = 365))+
+  ylab("Frequency")+
+  theme_minimal()+
+  labs(fill = "Technology Centre")
+```
+```{r turnover, echo=FALSE}
+#converting appl_status_date to date
+applications <- applications %>%
+  mutate(appl_status_date = dmy_hms(appl_status_date))
+
+#creating year variable
+applications <- applications %>%
+  mutate(year = year(appl_status_date))
+
+#filtering to prevent incorrect years after 2017
+applications <- applications %>%
+  filter(year <= 2017)
+
+#grouping by examiner_id
+turnover <- applications %>%
+  group_by(examiner_id) %>%
+  summarize(min_year = min(year), max_year = max(year), tc = first(tc), gender = first(gender), race = first(race)) %>%
+  mutate(year_left = if_else(max_year<2017, max_year+1, NA_real_))
+
+#calculating turnover
+turnover_rate2 <- turnover %>%
+  group_by(year_left) %>%
+  summarize(turnover_count = n()) %>%
+  mutate(year = year_left-1)
+
+#calculating total examiners
+total_examiners <- applications %>%
+  group_by(year) %>%
+  summarize(previous_year_count = n_distinct(examiner_id))
+
+#joining turnover and total examiners df's
+turnover_rate2 <- turnover_rate2 %>%
+  left_join(total_examiners) %>%
+  mutate(turnover_rate = turnover_count/previous_year_count*100) %>%
+  select(-year)
+
+#picking 2008 for analysis year
+regression_data <- turnover %>%
+  filter(min_year <= 2007, year_left >= 2008) %>%
+  mutate(left = if_else(year_left == 2008,1,0)) %>%
+  drop_na(gender)
+
+#descriptive
+regression_data %>%
+  count(gender, left) %>%
+  group_by(gender) %>%
+  mutate(pct = n/sum(n))
+
+#creating holdout sample
+holdout_sample <- regression_data %>%
+  slice_sample(prop = 0.15)
+
+#training set
+training_set <- regression_data %>%
+  anti_join(holdout_sample)
+```
+
+```{r modeling-gender&tc}
+#model
+model1 <- lm(data = training_set, left ~ gender + as.factor(tc))
+tidy(model1)
+summary(model1)
+
+#checking prediction
+holdout_predictions <- predict(model1, newdata = holdout_sample)
+
+#comparing
+holdout_actuals <- holdout_sample$left
+comparison_data <- data.frame(actuals = holdout_actuals, predictions = holdout_predictions)
+comparison_data <- comparison_data %>%
+  mutate(predictions = if_else(predictions >= 0.5, 1, 0))
+
+#False negative rate (there are no positive predictions so the FPR is 0)
+confusion_matrix <- table(comparison_data$predictions, comparison_data$actuals)
+fnr <- prop.table(confusion_matrix["0", "1"])
+```
+
+```{r including-race}
+#model
+model2 <- lm(data = training_set, left ~ gender + as.factor(tc) + race)
+tidy(model1)
+summary(model1)
+
+#checking prediction
+holdout_predictions2 <- predict(model2, newdata = holdout_sample)
+
+#comparing
+holdout_actuals2 <- holdout_sample$left
+comparison_data2 <- data.frame(actuals = holdout_actuals, predictions = holdout_predictions)
+comparison_data2 <- comparison_data2 %>%
+  mutate(predictions = if_else(predictions >= 0.5, 1, 0))
+
+#False negative rate (there are no positive predictions so the FPR is 0)
+confusion_matrix <- table(comparison_data2$predictions, comparison_data2$actuals)
+fnr2 <- prop.table(confusion_matrix["0", "1"])
+```
