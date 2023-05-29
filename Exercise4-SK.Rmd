@@ -1,0 +1,137 @@
+---
+title: "Exercise 4"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(arrow)
+library(ggplot2)
+library(broom)
+```
+
+### Setting up the data
+
+```{r import saved data, echo=FALSE}
+data_path <- "/Users/sameerkamal/Desktop/MBA/McGill - Work/People Analytics/"
+applications <-read_parquet(paste0(data_path,"exercise_3_applications.parquet"))
+```
+
+```{r creating-wgs-year-filtering}
+applications <- applications %>%
+  mutate(wg = (floor(examiner_art_unit / 10) * 10)) %>%
+  mutate(appl_status_date = dmy_hms(appl_status_date)) %>%
+  mutate(year = year(appl_status_date)) %>%
+  filter(year <= 2017) %>%
+  drop_na(examiner_id)
+```
+
+```{r creating examiners set}
+examiners <- applications %>%
+  group_by(examiner_id, examiner_art_unit, year) %>%
+  summarise( 
+    gender = first(gender),
+    race = first(race),
+    tc = first(tc),
+    wg = first(wg)
+    )
+```
+
+### Selecting TC 
+
+```{r selecting 1600}
+tc1600 <- examiners %>%
+  filter(tc == 1600) %>%
+  drop_na(gender)
+```
+
+### Visualizing
+```{r plotting tc, echo = FALSE}
+tc1600 %>%
+  group_by(year, gender) %>%
+  summarise(n = n_distinct(examiner_id)) %>%
+  ggplot(aes(x = year, y = n, fill = gender)) +
+  geom_col(position = "fill") +
+  ylab("Gender proportion")+
+  xlab("Year")+
+  ggtitle("Gender Distribution across TC1600 by year")+
+  labs(fill = "Gender")+
+  scale_fill_manual(values = c("female" = "pink", "male" = "blue"))+
+  theme_minimal()
+```
+
+```{r plotting wg, fig.width=8, fig.height=10, echo=FALSE}
+tc1600 %>%
+  filter(wg <1640) %>%
+  group_by(year, gender, wg) %>%
+  summarise(n = n_distinct(examiner_id)) %>%
+  ggplot(aes(fill = gender, x = year, y = n)) + 
+  geom_col(position = "fill") +
+  facet_wrap(~ wg, nrow = 2)+
+  ggtitle("Gender Distribution across Workgroups") +
+  xlab("Year") +
+  ylab("Gender proportion")+
+  labs(fill = "Gender")+
+  scale_fill_manual(values = c("female" = "pink", "male" = "blue"))+
+  theme_minimal()
+
+tc1600 %>%
+  filter(wg >= 1640) %>%
+  group_by(year, gender, wg) %>%
+  summarise(n = n_distinct(examiner_id)) %>%
+  ggplot(aes(fill = gender, x = year, y = n)) + 
+  geom_col(position = "fill") +
+  facet_wrap(~ wg, nrow = 2)+
+  xlab("Year") +
+  ylab("Gender proportion")+
+  labs(fill = "Gender")+
+  scale_fill_manual(values = c("female" = "pink", "male" = "blue"))+
+  theme_minimal()
+```
+
+```{r plotting au, echo=FALSE}
+average_counts <- tc1600 %>%
+  group_by(examiner_art_unit, year, gender) %>%
+  summarize(count = n()) %>%
+  group_by(examiner_art_unit, gender) %>%
+  summarize(average_count = mean(count)) %>%
+  ungroup()
+
+# Plot the gender proportions
+ggplot(average_counts, aes(x = examiner_art_unit, y = average_count, fill = gender)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(x = "Examiner Art Unit", y = "Average Proportion", fill = "Gender") +
+  ggtitle("Gender Proportions by Examiner Art Unit (based on average for the year)") +
+  scale_fill_manual(values = c("female" = "pink", "male" = "blue"))+
+  theme_minimal()
+
+ggplot(average_counts, aes(x = examiner_art_unit, y = average_count, fill = gender)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(x = "Examiner Art Unit", y = "Average Count", fill = "Gender") +
+  ggtitle("Gender Distributions by Examiner Art Unit (based on average for the year)") +
+  scale_fill_manual(values = c("female" = "pink", "male" = "blue"))+
+  theme_minimal()
+```
+
+### Depicting perceptions of gender composition
+
+```{r gender-perceptions, echo=FALSE}
+
+average_perception <- tc1600 %>%
+  group_by(examiner_art_unit, year, examiner_id, gender) %>%
+  summarize(peer_count = n()) %>%
+  group_by(examiner_art_unit, year) %>%
+  mutate(total_peers = sum(peer_count),
+         same_gender_proportion = sum(peer_count) / total_peers) %>%
+  summarize(average_perception = mean(same_gender_proportion)) %>%
+  ungroup()
+
+# Plot the average perception by examiner_art_unit for each year
+ggplot(average_perception, aes(x = year, y = average_perception, fill = examiner_art_unit)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Year", y = "Average Perception", fill = "Examiner Art Unit") +
+  ggtitle("Average Perception by Examiner Art Unit") +
+  theme_minimal()
+```
