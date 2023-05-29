@@ -12,14 +12,12 @@ library(ggplot2)
 library(broom)
 ```
 
-### Setting up the data
-
-```{r import saved data, echo=FALSE}
+```{r import saved data, echo=FALSE, message=FALSE}
 data_path <- "/Users/sameerkamal/Desktop/MBA/McGill - Work/People Analytics/"
 applications <-read_parquet(paste0(data_path,"exercise_3_applications.parquet"))
 ```
 
-```{r creating-wgs-year-filtering}
+```{r creating-wgs-year-filtering, echo=FALSE, message=FALSE}
 applications <- applications %>%
   mutate(wg = (floor(examiner_art_unit / 10) * 10)) %>%
   mutate(appl_status_date = dmy_hms(appl_status_date)) %>%
@@ -28,7 +26,7 @@ applications <- applications %>%
   drop_na(examiner_id)
 ```
 
-```{r creating examiners set}
+```{r creating examiners set, echo=FALSE, message=FALSE}
 examiners <- applications %>%
   group_by(examiner_id, examiner_art_unit, year) %>%
   summarise( 
@@ -39,16 +37,26 @@ examiners <- applications %>%
     )
 ```
 
-### Selecting TC 
+```{r selecting 1600, echo=FALSE, message=FALSE}
+examiners %>%
+  filter(tc == 1600) %>%
+  group_by(examiner_id) %>%
+  summarise(gender = first(gender)) %>%
+  count(gender == "male")
 
-```{r selecting 1600}
 tc1600 <- examiners %>%
   filter(tc == 1600) %>%
   drop_na(gender)
 ```
 
 ### Visualizing
-```{r plotting tc, echo = FALSE}
+
+I selected Technology Centre 1600 to analyze as the proportion of male and female examiners was closer than any other centre. I chose to remove examiners with 'NA' in gender, which resulted in 140 examiner's records being removed (out of a total 1093 - approximately 12.8%). 
+
+I could potentially have filled this at random with proportions similar to the existing identified male or female, however it is difficult to say whether this would be even remotely accurate or have value for the results.
+
+I wanted to show how distributions and proportions changed over time, so I included years in my pre-processed data.
+```{r plotting tc, echo=FALSE, message=FALSE}
 tc1600 %>%
   group_by(year, gender) %>%
   summarise(n = n_distinct(examiner_id)) %>%
@@ -62,7 +70,7 @@ tc1600 %>%
   theme_minimal()
 ```
 
-```{r plotting wg, fig.width=8, fig.height=10, echo=FALSE}
+```{r plotting wg, fig.width=8, fig.height=10, echo=FALSE, message=FALSE}
 tc1600 %>%
   filter(wg <1640) %>%
   group_by(year, gender, wg) %>%
@@ -91,7 +99,7 @@ tc1600 %>%
   theme_minimal()
 ```
 
-```{r plotting au, echo=FALSE}
+```{r plotting au, echo=FALSE, message=FALSE}
 average_counts <- tc1600 %>%
   group_by(examiner_art_unit, year, gender) %>%
   summarize(count = n()) %>%
@@ -117,21 +125,47 @@ ggplot(average_counts, aes(x = examiner_art_unit, y = average_count, fill = gend
 
 ### Depicting perceptions of gender composition
 
-```{r gender-perceptions, echo=FALSE}
+```{r gender-perceptions, echo=FALSE, message=FALSE}
 
-average_perception <- tc1600 %>%
-  group_by(examiner_art_unit, year, examiner_id, gender) %>%
-  summarize(peer_count = n()) %>%
+perception <- tc1600 %>%
   group_by(examiner_art_unit, year) %>%
-  mutate(total_peers = sum(peer_count),
-         same_gender_proportion = sum(peer_count) / total_peers) %>%
-  summarize(average_perception = mean(same_gender_proportion)) %>%
-  ungroup()
+  mutate(peer_count = if_else(gender == "male", sum(gender=="male")-1, sum(gender=="female")-1)) %>%
+  mutate(total_peers = if_else(gender == "male", sum(gender=="female")+peer_count, sum(gender=="male")+peer_count)) %>%
+  mutate(samegender_proportion = if_else(total_peers == 0 | peer_count == 0, NA_real_, peer_count / total_peers))
 
-# Plot the average perception by examiner_art_unit for each year
-ggplot(average_perception, aes(x = year, y = average_perception, fill = examiner_art_unit)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Year", y = "Average Perception", fill = "Examiner Art Unit") +
-  ggtitle("Average Perception by Examiner Art Unit") +
+
+sample_values <- sample(unique(perception$examiner_art_unit), 4)
+
+perception_sample <- perception[perception$examiner_art_unit %in% sample_values,]
+
+# Plot the samegender_proportion over the years for each examiner_art_unit separately
+perception_sample %>%
+  group_by(examiner_art_unit, year, gender) %>%
+  summarise(n = first(samegender_proportion)) %>%
+  ggplot(aes(x = year, y = n, fill = gender)) +
+  geom_col(position="stack") +
+  labs(x = "Year", y = "Same-Gender Proportion", fill = "Gender") +
+  ggtitle("Proportions of Same-Gender Perception over time for a sample of AUs") +
+  scale_y_continuous(limits = c(0, 1.0))+
+  facet_wrap(~ examiner_art_unit, nrow = 2) +
+  scale_fill_manual(values = c("male" = "blue", "female" = "pink"))+
+  theme_minimal()
+
+ggplot(perception_sample, aes(x = year, y = samegender_proportion, color = gender)) +
+  geom_line() +
+  labs(x = "Year", y = "Same-Gender Proportion", color = "Gender") +
+  ggtitle("Change in Same-Gender Perception over time for a sample of AUs") +
+  facet_wrap(~ examiner_art_unit, nrow = 2)+
+  scale_color_manual(values = c("male" = "blue", "female" = "pink"))+
   theme_minimal()
 ```
+
+### Thoughts on differences between gender proportions at different levels
+
+As we zoom in from the TC level to the art unit level, we see considerable variation in the data. Certain art units, on average, have considerably more women than men and vice-versa. However, when looking at the work group level, we see that over time the proportion tends to even out as time passes. 
+
+WG 1600 seems to be an exception, although this may be due to the fact that the total number of examiners is much lower in that group than in the other seven WG. The data also does not start until 2004, indicating that it may be a new workgroup altogether, and has not reached the maturity levels others may have.
+
+At the art unit level, it is difficult to discern a trend, although in general it seems if the proportion in one year drops, the proportion in the next year may increase. This could be due to conscious hiring decisions to balance teams, but the impact is difficult to measure. 
+
+In general, it seems any conscious efforts to equalize gender proportions seems to be at the TC level. This may trickle down into the WG level, which can then trickle down into art units, but as long as metrics at the TC level are even the variation at the minute level can be allowed.
