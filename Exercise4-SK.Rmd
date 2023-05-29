@@ -133,7 +133,6 @@ perception <- tc1600 %>%
   mutate(total_peers = if_else(gender == "male", sum(gender=="female")+peer_count, sum(gender=="male")+peer_count)) %>%
   mutate(samegender_proportion = if_else(total_peers == 0 | peer_count == 0, NA_real_, peer_count / total_peers))
 
-
 sample_values <- sample(unique(perception$examiner_art_unit), 4)
 
 perception_sample <- perception[perception$examiner_art_unit %in% sample_values,]
