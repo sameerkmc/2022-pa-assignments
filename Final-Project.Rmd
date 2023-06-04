@@ -1,0 +1,87 @@
+---
+title: "Group Project"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(arrow)
+library(ggplot2)
+library(broom)
+```
+
+```{r import saved data, echo=FALSE, message=FALSE}
+data_path <- "/Users/sameerkamal/Desktop/MBA/McGill - Work/People Analytics/"
+applications_project <-read_parquet(paste0(data_path,"exercise_3_applications.parquet"))
+```
+
+```{r filtering-invalid-date-cleaning}
+
+applications_project <- applications_project %>%
+  drop_na(application_number) %>%
+  filter(application_number != "08531853")
+
+```
+
+```{r analyzing-app-length}
+
+length_df <- applications_project %>%
+  filter(disposal_type != "PEND") %>%
+  drop_na(disposal_type)
+
+length_df <- length_df %>%
+  mutate(app_length = if_else(disposal_type == "ISS", interval(filing_date, patent_issue_date) %/% days(1),interval(filing_date, abandon_date) %/% days(1))) %>%
+  mutate(wg = (floor(examiner_art_unit / 10) * 10))
+
+average_length_dt <- length_df %>%
+  group_by(examiner_id, disposal_type, wg) %>%
+  summarize(
+    gender= first(gender),
+    race = first(race),
+    tc = first(tc),
+    avg_length = mean(app_length),
+  ) %>%
+  drop_na(gender) %>%
+  drop_na(examiner_id)
+
+average_length <- length_df %>%
+  group_by(examiner_id, wg) %>%
+  summarize(
+    gender= first(gender),
+    race = first(race),
+    tc = first(tc),
+    avg_length = mean(app_length),
+  ) %>%
+  drop_na(gender) %>%
+  drop_na(examiner_id)
+
+model_avg_dt <- lm(data = average_length_dt, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type))
+
+tidy(model_avg_dt)
+
+summary(model_avg_dt)
+
+model_avg_1600 <- average_length %>%
+  filter(tc == "1600") %>%
+  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
+
+model_avg_1700 <- average_length %>%
+  filter(tc == "1700") %>%
+  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
+
+model_avg_2100 <- average_length %>%
+  filter(tc == "2100") %>%
+  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
+
+model_avg_2400 <- average_length %>%
+  filter(tc == "2400") %>%
+  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
+
+
+summary(model_avg_1600)
+summary(model_avg_1700)
+summary(model_avg_2100)
+summary(model_avg_2400)
+```
