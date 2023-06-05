@@ -67,7 +67,7 @@ averages_tc %>%
   summarize(y = mean(gender_count_tc)) %>%
   ggplot(aes(x = as.factor(tc), y = y, fill = gender)) +
   geom_col(position = "fill")+
-  labs(x = "Technology Centre", y = "Average count of genders", fill = "Gender") +
+  labs(x = "Technology Centre", y = "Average proportion of genders", fill = "Gender") +
   ggtitle("Average gender distribution across technology centres") +
   theme_minimal() +
   scale_fill_manual(values = c("male" = "blue", "female" = "pink"))
@@ -102,7 +102,7 @@ averages_wg %>%
   summarize(y = mean(gender_count_wg)) %>%
   ggplot(aes(x = as.factor(wg), y = y, fill = gender)) +
   geom_col(position = "fill")+
-  labs(x = "Work Group", y = "Average count of genders", fill = "Gender") +
+  labs(x = "Work Group", y = "Average proportion of genders", fill = "Gender") +
   ggtitle("Average gender distribution across work group") +
   theme_minimal() +
   scale_fill_manual(values = c("male" = "blue", "female" = "pink"))
@@ -136,14 +136,15 @@ averages_au_1700 %>%
   summarize(y = mean(gender_count_au)) %>%
   ggplot(aes(x = examiner_art_unit, y = y, fill = gender)) +
   geom_col(position = "fill")+
-  labs(x = "Art Unit", y = "Average count of genders", fill = "Gender") +
+  labs(x = "Art Unit", y = "Average proportion of genders", fill = "Gender") +
   ggtitle("Average gender distribution across art units") +
   theme_minimal() +
   scale_fill_manual(values = c("male" = "blue", "female" = "pink"))
 ```
 
-![](Exercise-5_files/figure-gfm/plotting-au-averages-2.png)<!-- --> \##
-Looking at individual examiner’s perspectives
+![](Exercise-5_files/figure-gfm/plotting-au-averages-2.png)<!-- -->
+
+## Looking at individual examiner’s perspectives
 
 ``` r
 #creating perception variables
