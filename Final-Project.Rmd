@@ -27,27 +27,67 @@ applications_project <- applications_project %>%
 
 ```{r analyzing-app-length}
 
+#creating a new dataset of issued and abandoned applications
+
 length_df <- applications_project %>%
   filter(disposal_type != "PEND") %>%
   drop_na(disposal_type)
 
+#transforming by creating app length variable, cleaning and subtracting 60 days in cases where application was abandoned due to lack of response (to approximate the final patent office decision date)
+
 length_df <- length_df %>%
   mutate(app_length = if_else(disposal_type == "ISS", interval(filing_date, patent_issue_date) %/% days(1),interval(filing_date, abandon_date) %/% days(1))) %>%
-  mutate(wg = (floor(examiner_art_unit / 10) * 10))
+  mutate(wg = (floor(examiner_art_unit / 10) * 10)) %>%
+  filter(app_length >= 0)%>%
+  filter(app_length <= 6385) %>%
+  mutate(app_length = if_else(appl_status_code == 161 & app_length > 60, app_length - 60, app_length))%>%
+  drop_na(app_length)
+```
 
-average_length_dt <- length_df %>%
-  group_by(examiner_id, disposal_type, wg) %>%
-  summarize(
-    gender= first(gender),
-    race = first(race),
-    tc = first(tc),
-    avg_length = mean(app_length),
-  ) %>%
+```{r visualizing}
+
+#average time taken per app for gender
+length_df %>%
   drop_na(gender) %>%
-  drop_na(examiner_id)
+  group_by(examiner_id, gender) %>%
+  summarize(y = mean(app_length)) %>%
+  ggplot(aes(x = gender, y = y, fill=gender)) +
+  geom_col(position = "dodge")+
+  labs(x = "Technology Centre", y = "Average days for application completion", fill = "Gender") +
+  ggtitle("Average application length by gender") +
+  theme_minimal()+
+  scale_fill_manual(values = c("male" = "lightblue", "female" = "pink"))
 
+#average time taken per app for race
+length_df %>%
+  drop_na(gender) %>%
+  group_by(race, examiner_id) %>%
+  summarize(y = mean(app_length)) %>%
+  ggplot(aes(x = as.factor(race), y = y,fill=race)) +
+  geom_col(position = "dodge")+
+  labs(x = "Technology Centre", y = "Average days for application completion", fill = "Race") +
+  ggtitle("Average processing times by race") +
+  theme_minimal()
+        
+#distribution of app length based on final decision (issued or abandoned)  
+length_df %>%
+  drop_na(examiner_id) %>%
+  drop_na(gender)%>%
+  ggplot(aes(y = app_length, fill = disposal_type)) +
+  geom_boxplot(outlier.shape = NA) +
+  facet_wrap(~ disposal_type, nrow = 1) +
+  coord_cartesian(ylim = c(0, 3000)) +
+  theme_minimal()+
+  scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))+
+  labs(y = "Application length", fill = "Race") +
+  ggtitle("Application length by final decision")
+
+```
+
+```{r regression}
+#creating a regression dataframe
 average_length <- length_df %>%
-  group_by(examiner_id, wg) %>%
+  group_by(examiner_id, disposal_type) %>%
   summarize(
     gender= first(gender),
     race = first(race),
@@ -57,31 +97,13 @@ average_length <- length_df %>%
   drop_na(gender) %>%
   drop_na(examiner_id)
 
-model_avg_dt <- lm(data = average_length_dt, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type))
+#regression with full dataset
+model_base <-lm(data = length_df, app_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type))
 
-tidy(model_avg_dt)
+#regression with preprocessed set
+model_avg <- lm(data = average_length, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type))
 
-summary(model_avg_dt)
+tidy(model_base)
+tidy(model_avg)
 
-model_avg_1600 <- average_length %>%
-  filter(tc == "1600") %>%
-  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
-
-model_avg_1700 <- average_length %>%
-  filter(tc == "1700") %>%
-  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
-
-model_avg_2100 <- average_length %>%
-  filter(tc == "2100") %>%
-  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
-
-model_avg_2400 <- average_length %>%
-  filter(tc == "2400") %>%
-  {lm(avg_length ~ as.factor(wg) + as.factor(gender) + as.factor(race), data = .)}
-
-
-summary(model_avg_1600)
-summary(model_avg_1700)
-summary(model_avg_2100)
-summary(model_avg_2400)
 ```
