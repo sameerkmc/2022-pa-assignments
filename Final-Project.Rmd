@@ -41,50 +41,188 @@ length_df <- length_df %>%
   filter(app_length >= 0)%>%
   filter(app_length <= 6385) %>%
   mutate(app_length = if_else(appl_status_code == 161 & app_length > 60, app_length - 60, app_length))%>%
-  drop_na(app_length)
+  drop_na(app_length) %>%
+  mutate(year_submitted = year(filing_date))
+
+#removing outliers of average processing time
+
+avg_time <- length_df %>%
+  drop_na(examiner_id) %>%
+  drop_na(gender) %>%
+  group_by(examiner_id) %>%
+  summarize(avg_app_length = mean(app_length),
+            )
+
+is_outlier <- function(x) {
+  q <- quantile(x, probs = c(0.25, 0.75))
+  iqr <- q[2] - q[1]
+  lower_bound <- q[1] - (1.5 * iqr)
+  upper_bound <- q[2] + (1.5 * iqr)
+  x < lower_bound | x > upper_bound
+}
+
+filtered <- avg_time %>%
+  filter(!is_outlier(avg_app_length))
+
+length_df <- length_df %>%
+  drop_na(gender) %>%
+  drop_na(examiner_id) %>%
+  semi_join(filtered, by = "examiner_id")
+
 ```
 
 ```{r visualizing}
 
 #average time taken per app for gender
 length_df %>%
-  drop_na(gender) %>%
-  group_by(examiner_id, gender) %>%
+  group_by(gender) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = gender, y = y, fill=gender)) +
   geom_col(position = "dodge")+
-  labs(x = "Technology Centre", y = "Average days for application completion", fill = "Gender") +
+  labs(x = "Gender", y = "Average days for application completion", fill = "Gender") +
   ggtitle("Average application length by gender") +
   theme_minimal()+
   scale_fill_manual(values = c("male" = "lightblue", "female" = "pink"))
 
 #average time taken per app for race
 length_df %>%
-  drop_na(gender) %>%
-  group_by(race, examiner_id) %>%
+  group_by(race) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = as.factor(race), y = y,fill=race)) +
   geom_col(position = "dodge")+
   labs(x = "Technology Centre", y = "Average days for application completion", fill = "Race") +
   ggtitle("Average processing times by race") +
   theme_minimal()
+
+#average application times by TC
+length_df %>%
+  group_by(tc) %>%
+  summarize(y = mean(app_length)) %>%
+  ggplot(aes(x = as.factor(tc), y = y, fill=as.factor(tc))) +
+  geom_col()+
+  labs(x = "Technology Centre", y = "Average days for application completion", fill = "TC") +
+  ggtitle("Average processing times by TC") +
+  scale_fill_manual(values = c("1600" = "green", "1700" = "purple", "2100"="darkblue", "2400"="red"))+
+  theme_minimal()
         
 #distribution of app length based on final decision (issued or abandoned)  
 length_df %>%
-  drop_na(examiner_id) %>%
-  drop_na(gender)%>%
   ggplot(aes(y = app_length, fill = disposal_type)) +
   geom_boxplot(outlier.shape = NA) +
   facet_wrap(~ disposal_type, nrow = 1) +
   coord_cartesian(ylim = c(0, 3000)) +
   theme_minimal()+
   scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))+
-  labs(y = "Application length", fill = "Race") +
-  ggtitle("Application length by final decision")
+  labs(y = "Application length") +
+  ggtitle("Application length by final decision")+
+  theme(axis.text.x = element_blank())
+
 
 ```
 
-```{r regression}
+```{r structural-differences}
+
+#gender distribution
+length_df %>%
+  group_by(gender, tc) %>%
+  summarize(n = n_distinct(examiner_id)) %>%
+  ggplot(aes(x = as.factor(tc), y = n, fill=gender)) +
+  geom_col(position = "dodge")+
+  labs(x = "TC", y = "Count", fill = "Gender") +
+  ggtitle("Gender Distribution across TC") +
+  theme_minimal()+
+  scale_fill_manual(values = c("male" = "lightblue", "female" = "pink"))
+
+#racial distribution across TC
+length_df %>%
+  group_by(race, tc) %>%
+  summarize(n = n_distinct(examiner_id)) %>%
+  ggplot(aes(x = as.factor(tc), y = n, fill=race)) +
+  geom_col(position = "dodge")+
+  labs(x = "TC", y = "Count", fill = "Race") +
+  ggtitle("Racial distributions across TCs") +
+  theme_minimal()
+
+#total distribution across TC
+length_df %>%
+  group_by(tc) %>%
+  summarize(n = n_distinct(examiner_id)) %>%
+  ggplot(aes(x = as.factor(tc), y = n, fill=as.factor(tc))) +
+  geom_col(position = "dodge")+
+  labs(x = "TC", y = "Count", fill = "TC") +
+  ggtitle("Distribution of employees across TCs") +
+  theme_minimal()+
+  scale_fill_manual(values = c("1600" = "green", "1700" = "purple", "2100"="darkblue", "2400"="red"))
+
+#distribution of decision type by gender
+length_df %>%
+  group_by(gender, disposal_type) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(x = gender, y = count, fill=disposal_type)) +
+  geom_col(position = "fill")+
+  labs(x = "Gender", y = "Decision proportion", fill = "Disposal Type") +
+  ggtitle("Distribution of decision type by gender") +
+  theme_minimal()+
+  scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
+
+#distribution of decision type by race
+length_df %>%
+  group_by(race, disposal_type) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(x = race, y = count, fill=disposal_type)) +
+  geom_col(position = "fill")+
+  labs(x = "Race", y = "Decision proportion", fill = "Disposal Type") +
+  ggtitle("Distribution of decision type by race") +
+  theme_minimal() +
+  scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
+  
+#distribution of decision type by TC
+length_df %>%
+  group_by(tc, disposal_type) %>%
+  summarize(count = n()) %>%
+  ggplot(aes(x = as.factor(tc), y = count, fill=disposal_type)) +
+  geom_col(position = "fill")+
+  labs(x = "TC", y = "Decision proportion", fill = "Disposal Type") +
+  ggtitle("Distribution of decision type by TC") +
+  theme_minimal()+
+  scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
+
+#average processing time based on decision for each gender
+length_df %>%
+  group_by(gender, disposal_type) %>%
+  summarize(y = mean(app_length)) %>%
+  ggplot(aes(x = gender, y = y, fill=disposal_type)) +
+  geom_col(position = "dodge")+
+  labs(x = "Gender", y = "Decision time", fill = "Disposal Type") +
+  ggtitle("Average processing time for each decision type by gender ") +
+  theme_minimal()+
+  scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
+
+#average processing time based on decision for each race
+length_df %>%
+  group_by(race, disposal_type) %>%
+  summarize(y = mean(app_length)) %>%
+  ggplot(aes(x = race, y = y, fill=disposal_type)) +
+  geom_col(position = "dodge")+
+  labs(x = "Race", y = "Decision time", fill = "Disposal Type") +
+  ggtitle("Average processing time for each decision type by race") +
+  theme_minimal()+
+  scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
+
+#average processing time based on decision for each tc
+length_df %>%
+  group_by(tc, disposal_type) %>%
+  summarize(y = mean(app_length)) %>%
+  ggplot(aes(x = as.factor(tc), y = y, fill=disposal_type)) +
+  geom_col(position = "dodge")+
+  labs(x = "TC", y = "Decision time", fill = "Disposal Type") +
+  ggtitle("Average processing time for each decision type by TC") +
+  theme_minimal()+
+  scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
+
+```
+
+```{r regression, message=FALSE}
 #creating a regression dataframe
 average_length <- length_df %>%
   group_by(examiner_id, disposal_type) %>%
@@ -93,17 +231,27 @@ average_length <- length_df %>%
     race = first(race),
     tc = first(tc),
     avg_length = mean(app_length),
-  ) %>%
-  drop_na(gender) %>%
-  drop_na(examiner_id)
+    tenure = first(tenure_days)
+  )
 
-#regression with full dataset
-model_base <-lm(data = length_df, app_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type))
+
 
 #regression with preprocessed set
 model_avg <- lm(data = average_length, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type))
 
-tidy(model_base)
+
+model_avg_wt <- lm(data = average_length, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type) + tenure)
+
+library(stargazer)
+
+summary(model_avg)
+summary(model_avg2)
+summary(model_avg_wt)
+
 tidy(model_avg)
+tidy(model_avg_wt)
+
+stargazer(model_avg, type="text")
+stargazer(model_avg_wt, type="text")
 
 ```
