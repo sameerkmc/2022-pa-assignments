@@ -367,7 +367,7 @@ summary(model_avg_wt)
 ``` r
 yoe_df <- length_df %>%
   drop_na(earliest_date) %>%
-  mutate(yoe = year(filing_date)-year(earliest_date))
+  mutate(yoe = floor(interval(earliest_date, filing_date, ) / dyears(1)))
 
 yoe_df %>%
   group_by(yoe) %>%
@@ -412,43 +412,43 @@ summary(model_yoe_af)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -1584.4  -307.3   -21.0   247.7  4380.0 
+    ## -1561.1  -304.3   -21.1   249.3  4405.4 
     ## 
     ## Coefficients:
     ##                              Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)                  1658.344      8.444 196.385  < 2e-16 ***
-    ## as.factor(tc)1700            -135.796      5.129 -26.477  < 2e-16 ***
-    ## as.factor(tc)2100              19.007      5.513   3.448 0.000566 ***
-    ## as.factor(tc)2400             127.806      5.747  22.239  < 2e-16 ***
-    ## as.factor(gender)male         -26.522      4.062  -6.530 6.63e-11 ***
-    ## as.factor(race)black          -17.554     10.309  -1.703 0.088623 .  
-    ## as.factor(race)Hispanic       -59.115     10.224  -5.782 7.41e-09 ***
-    ## as.factor(race)other          241.599     69.546   3.474 0.000513 ***
-    ## as.factor(race)white          -23.250      4.397  -5.287 1.25e-07 ***
-    ## as.factor(disposal_type)ISS   216.643      3.673  58.986  < 2e-16 ***
-    ## as.factor(yoe)1              -168.129      8.776 -19.158  < 2e-16 ***
-    ## as.factor(yoe)2              -228.488      8.765 -26.068  < 2e-16 ***
-    ## as.factor(yoe)3              -276.826      8.855 -31.263  < 2e-16 ***
-    ## as.factor(yoe)4              -333.945      8.967 -37.240  < 2e-16 ***
-    ## as.factor(yoe)5              -408.016      9.104 -44.819  < 2e-16 ***
-    ## as.factor(yoe)6              -476.806      9.251 -51.544  < 2e-16 ***
-    ## as.factor(yoe)7              -545.030      9.395 -58.013  < 2e-16 ***
-    ## as.factor(yoe)8              -635.691      9.541 -66.626  < 2e-16 ***
-    ## as.factor(yoe)9              -727.608      9.739 -74.710  < 2e-16 ***
-    ## as.factor(yoe)10             -825.008     10.026 -82.289  < 2e-16 ***
-    ## as.factor(yoe)11             -915.887     10.385 -88.190  < 2e-16 ***
-    ## as.factor(yoe)12             -984.030     10.971 -89.695  < 2e-16 ***
-    ## as.factor(yoe)13            -1021.815     11.691 -87.400  < 2e-16 ***
-    ## as.factor(yoe)14            -1107.533     12.633 -87.673  < 2e-16 ***
-    ## as.factor(yoe)15            -1269.512     14.369 -88.349  < 2e-16 ***
-    ## as.factor(yoe)16            -1464.788     19.577 -74.820  < 2e-16 ***
-    ## as.factor(yoe)17            -1698.160    183.778  -9.240  < 2e-16 ***
+    ## (Intercept)                  1636.491      8.115 201.664  < 2e-16 ***
+    ## as.factor(tc)1700            -134.207      5.070 -26.471  < 2e-16 ***
+    ## as.factor(tc)2100              16.705      5.464   3.057  0.00224 ** 
+    ## as.factor(tc)2400             119.079      5.694  20.915  < 2e-16 ***
+    ## as.factor(gender)male         -28.613      4.027  -7.105 1.22e-12 ***
+    ## as.factor(race)black          -15.420     10.225  -1.508  0.13155    
+    ## as.factor(race)Hispanic       -55.167     10.180  -5.419 6.00e-08 ***
+    ## as.factor(race)other          270.898     68.906   3.931 8.45e-05 ***
+    ## as.factor(race)white          -21.582      4.363  -4.946 7.58e-07 ***
+    ## as.factor(disposal_type)ISS   213.079      3.642  58.507  < 2e-16 ***
+    ## as.factor(yoe)1              -184.084      8.347 -22.053  < 2e-16 ***
+    ## as.factor(yoe)2              -238.848      8.416 -28.380  < 2e-16 ***
+    ## as.factor(yoe)3              -287.523      8.527 -33.718  < 2e-16 ***
+    ## as.factor(yoe)4              -350.058      8.642 -40.505  < 2e-16 ***
+    ## as.factor(yoe)5              -413.822      8.795 -47.052  < 2e-16 ***
+    ## as.factor(yoe)6              -482.328      8.947 -53.911  < 2e-16 ***
+    ## as.factor(yoe)7              -553.394      9.083 -60.923  < 2e-16 ***
+    ## as.factor(yoe)8              -646.786      9.255 -69.889  < 2e-16 ***
+    ## as.factor(yoe)9              -733.248      9.502 -77.168  < 2e-16 ***
+    ## as.factor(yoe)10             -826.663      9.825 -84.140  < 2e-16 ***
+    ## as.factor(yoe)11             -911.939     10.290 -88.625  < 2e-16 ***
+    ## as.factor(yoe)12             -969.157     10.912 -88.813  < 2e-16 ***
+    ## as.factor(yoe)13            -1010.576     11.681 -86.513  < 2e-16 ***
+    ## as.factor(yoe)14            -1109.840     12.724 -87.222  < 2e-16 ***
+    ## as.factor(yoe)15            -1258.234     14.897 -84.463  < 2e-16 ***
+    ## as.factor(yoe)16            -1443.482     21.416 -67.402  < 2e-16 ***
+    ## as.factor(yoe)17            -1644.337    228.192  -7.206 5.82e-13 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 519.4 on 80212 degrees of freedom
-    ## Multiple R-squared:  0.3292, Adjusted R-squared:  0.329 
-    ## F-statistic:  1514 on 26 and 80212 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 510 on 78637 degrees of freedom
+    ## Multiple R-squared:  0.3259, Adjusted R-squared:  0.3257 
+    ## F-statistic:  1462 on 26 and 78637 DF,  p-value: < 2.2e-16
 
 ``` r
 summary(model_yoe)
@@ -461,27 +461,27 @@ summary(model_yoe)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -1568.9  -308.1   -22.2   252.1  4415.4 
+    ## -1529.5  -304.9   -21.1   250.5  4454.1 
     ## 
     ## Coefficients:
     ##                              Estimate Std. Error  t value Pr(>|t|)    
-    ## (Intercept)                 1624.4228     6.5866  246.625  < 2e-16 ***
-    ## as.factor(tc)1700           -135.5656     5.1386  -26.382  < 2e-16 ***
-    ## as.factor(tc)2100             19.3059     5.5240    3.495 0.000475 ***
-    ## as.factor(tc)2400            129.8567     5.7556   22.562  < 2e-16 ***
-    ## as.factor(gender)male        -26.2794     4.0702   -6.457 1.08e-10 ***
-    ## as.factor(race)black         -17.4412    10.3311   -1.688 0.091372 .  
-    ## as.factor(race)Hispanic      -58.9434    10.2456   -5.753 8.80e-09 ***
-    ## as.factor(race)other         240.6325    69.6927    3.453 0.000555 ***
-    ## as.factor(race)white         -23.4009     4.4065   -5.310 1.10e-07 ***
-    ## as.factor(disposal_type)ISS  215.2188     3.6774   58.525  < 2e-16 ***
-    ## yoe                          -78.3010     0.4312 -181.605  < 2e-16 ***
+    ## (Intercept)                 1588.9916     6.4950  244.647  < 2e-16 ***
+    ## as.factor(tc)1700           -134.4209     5.0801  -26.460  < 2e-16 ***
+    ## as.factor(tc)2100             17.2722     5.4758    3.154  0.00161 ** 
+    ## as.factor(tc)2400            120.9493     5.7021   21.212  < 2e-16 ***
+    ## as.factor(gender)male        -28.4814     4.0359   -7.057 1.72e-12 ***
+    ## as.factor(race)black         -15.3010    10.2476   -1.493  0.13541    
+    ## as.factor(race)Hispanic      -55.0975    10.2018   -5.401 6.65e-08 ***
+    ## as.factor(race)other         268.9962    69.0561    3.895 9.81e-05 ***
+    ## as.factor(race)white         -21.5611     4.3727   -4.931 8.20e-07 ***
+    ## as.factor(disposal_type)ISS  211.8978     3.6469   58.104  < 2e-16 ***
+    ## yoe                          -76.8524     0.4314 -178.158  < 2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 520.6 on 80228 degrees of freedom
-    ## Multiple R-squared:  0.3262, Adjusted R-squared:  0.3261 
-    ## F-statistic:  3884 on 10 and 80228 DF,  p-value: < 2.2e-16
+    ## Residual standard error: 511.2 on 78653 degrees of freedom
+    ## Multiple R-squared:  0.3228, Adjusted R-squared:  0.3228 
+    ## F-statistic:  3750 on 10 and 78653 DF,  p-value: < 2.2e-16
 
 ``` r
 tidy(model_yoe_af)
@@ -490,14 +490,14 @@ tidy(model_yoe_af)
     ## # A tibble: 27 × 5
     ##    term                        estimate std.error statistic   p.value
     ##    <chr>                          <dbl>     <dbl>     <dbl>     <dbl>
-    ##  1 (Intercept)                   1658.       8.44    196.   0        
-    ##  2 as.factor(tc)1700             -136.       5.13    -26.5  8.30e-154
-    ##  3 as.factor(tc)2100               19.0      5.51      3.45 5.66e-  4
-    ##  4 as.factor(tc)2400              128.       5.75     22.2  3.07e-109
-    ##  5 as.factor(gender)male          -26.5      4.06     -6.53 6.63e- 11
-    ##  6 as.factor(race)black           -17.6     10.3      -1.70 8.86e-  2
-    ##  7 as.factor(race)Hispanic        -59.1     10.2      -5.78 7.41e-  9
-    ##  8 as.factor(race)other           242.      69.5       3.47 5.13e-  4
-    ##  9 as.factor(race)white           -23.2      4.40     -5.29 1.25e-  7
-    ## 10 as.factor(disposal_type)ISS    217.       3.67     59.0  0        
+    ##  1 (Intercept)                   1636.       8.11    202.   0        
+    ##  2 as.factor(tc)1700             -134.       5.07    -26.5  9.96e-154
+    ##  3 as.factor(tc)2100               16.7      5.46      3.06 2.24e-  3
+    ##  4 as.factor(tc)2400              119.       5.69     20.9  7.20e- 97
+    ##  5 as.factor(gender)male          -28.6      4.03     -7.10 1.22e- 12
+    ##  6 as.factor(race)black           -15.4     10.2      -1.51 1.32e-  1
+    ##  7 as.factor(race)Hispanic        -55.2     10.2      -5.42 6.00e-  8
+    ##  8 as.factor(race)other           271.      68.9       3.93 8.45e-  5
+    ##  9 as.factor(race)white           -21.6      4.36     -4.95 7.58e-  7
+    ## 10 as.factor(disposal_type)ISS    213.       3.64     58.5  0        
     ## # ℹ 17 more rows

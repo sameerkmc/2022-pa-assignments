@@ -264,7 +264,7 @@ summary(model_avg_wt)
 
 yoe_df <- length_df %>%
   drop_na(earliest_date) %>%
-  mutate(yoe = year(filing_date)-year(earliest_date))
+  mutate(yoe = floor(interval(earliest_date, filing_date, ) / dyears(1)))
 
 yoe_df %>%
   group_by(yoe) %>%
@@ -285,12 +285,12 @@ yoe_reg <- yoe_df %>%
     tenure = first(tenure_days)
   )
 
+
 model_yoe_af <- lm(data = yoe_reg, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type) + as.factor(yoe))
 
 model_yoe <- lm(data = yoe_reg, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type) + yoe)
 
 summary(model_yoe_af)
-
 summary(model_yoe)
 
 tidy(model_yoe_af)
