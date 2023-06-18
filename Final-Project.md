@@ -57,7 +57,7 @@ length_df %>%
   group_by(gender) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = gender, y = y, fill=gender)) +
-  geom_col(position = "dodge")+
+  geom_col(position = "dodge", color="black")+
   labs(x = "Gender", y = "Average days for application completion", fill = "Gender") +
   ggtitle("Average application length by gender") +
   theme_minimal()+
@@ -72,7 +72,7 @@ length_df %>%
   group_by(race) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = as.factor(race), y = y,fill=race)) +
-  geom_col(position = "dodge")+
+  geom_col(position = "dodge", color="black")+
   labs(x = "Technology Centre", y = "Average days for application completion", fill = "Race") +
   ggtitle("Average processing times by race") +
   theme_minimal()
@@ -86,7 +86,7 @@ length_df %>%
   group_by(tc) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = as.factor(tc), y = y, fill=as.factor(tc))) +
-  geom_col()+
+  geom_col(color="black")+
   labs(x = "Technology Centre", y = "Average days for application completion", fill = "TC") +
   ggtitle("Average processing times by TC") +
   scale_fill_manual(values = c("1600" = "green", "1700" = "purple", "2100"="darkblue", "2400"="red"))+
@@ -96,6 +96,19 @@ length_df %>%
 ![](Final-Project_files/figure-gfm/visualizing-3.png)<!-- -->
 
 ``` r
+gender_avg <- length_df %>%
+  group_by(gender) %>%
+  summarize(y = mean(app_length))
+
+race_avg <- length_df %>%
+  group_by(race) %>%
+  summarize(y = mean(app_length))
+
+tc_avg <- length_df %>%
+  group_by(tc) %>%
+  summarize(y = mean(app_length))
+
+  
 #distribution of app length based on final decision (issued or abandoned)  
 length_df %>%
   ggplot(aes(y = app_length, fill = disposal_type)) +
@@ -117,7 +130,7 @@ length_df %>%
   group_by(gender, tc) %>%
   summarize(n = n_distinct(examiner_id)) %>%
   ggplot(aes(x = as.factor(tc), y = n, fill=gender)) +
-  geom_col(position = "dodge")+
+  geom_col(position = "dodge", color="black")+
   labs(x = "TC", y = "Count", fill = "Gender") +
   ggtitle("Gender Distribution across TC") +
   theme_minimal()+
@@ -135,8 +148,8 @@ length_df %>%
   group_by(race, tc) %>%
   summarize(n = n_distinct(examiner_id)) %>%
   ggplot(aes(x = as.factor(tc), y = n, fill=race)) +
-  geom_col(position = "dodge")+
-  labs(x = "TC", y = "Count", fill = "Race") +
+  geom_col(position = "dodge", color="black")+
+  labs(x = "Technology Centre", y = "Count", fill = "Race") +
   ggtitle("Racial distributions across TCs") +
   theme_minimal()
 ```
@@ -152,8 +165,8 @@ length_df %>%
   group_by(tc) %>%
   summarize(n = n_distinct(examiner_id)) %>%
   ggplot(aes(x = as.factor(tc), y = n, fill=as.factor(tc))) +
-  geom_col(position = "dodge")+
-  labs(x = "TC", y = "Count", fill = "TC") +
+  geom_col(position = "dodge", color="black")+
+  labs(x = "Technology Centre", y = "Count", fill = "TC") +
   ggtitle("Distribution of employees across TCs") +
   theme_minimal()+
   scale_fill_manual(values = c("1600" = "green", "1700" = "purple", "2100"="darkblue", "2400"="red"))
@@ -204,7 +217,7 @@ length_df %>%
   summarize(count = n()) %>%
   ggplot(aes(x = as.factor(tc), y = count, fill=disposal_type)) +
   geom_col(position = "fill")+
-  labs(x = "TC", y = "Decision proportion", fill = "Disposal Type") +
+  labs(x = "Technology Centre", y = "Decision proportion", fill = "Disposal Type") +
   ggtitle("Distribution of decision type by TC") +
   theme_minimal()+
   scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
@@ -221,7 +234,7 @@ length_df %>%
   group_by(gender, disposal_type) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = gender, y = y, fill=disposal_type)) +
-  geom_col(position = "dodge")+
+  geom_col(position = "dodge", color="black")+
   labs(x = "Gender", y = "Decision time", fill = "Disposal Type") +
   ggtitle("Average processing time for each decision type by gender ") +
   theme_minimal()+
@@ -239,7 +252,7 @@ length_df %>%
   group_by(race, disposal_type) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = race, y = y, fill=disposal_type)) +
-  geom_col(position = "dodge")+
+  geom_col(position = "dodge", color="black")+
   labs(x = "Race", y = "Decision time", fill = "Disposal Type") +
   ggtitle("Average processing time for each decision type by race") +
   theme_minimal()+
@@ -257,8 +270,8 @@ length_df %>%
   group_by(tc, disposal_type) %>%
   summarize(y = mean(app_length)) %>%
   ggplot(aes(x = as.factor(tc), y = y, fill=disposal_type)) +
-  geom_col(position = "dodge")+
-  labs(x = "TC", y = "Decision time", fill = "Disposal Type") +
+  geom_col(position = "dodge", color="black")+
+  labs(x = "Technology Centre", y = "Decision time", fill = "Disposal Type") +
   ggtitle("Average processing time for each decision type by TC") +
   theme_minimal()+
   scale_fill_manual(values = c("ISS" = "darkgreen", "ABN" = "darkred"))
@@ -281,13 +294,10 @@ average_length <- length_df %>%
     tenure = first(tenure_days)
   )
 
-
 #regression with preprocessed set
 model_avg <- lm(data = average_length, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type))
 
 model_avg_wt <- lm(data = average_length, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type) + tenure)
-
-library(stargazer)
 
 summary(model_avg)
 ```
@@ -355,139 +365,139 @@ summary(model_avg_wt)
     ## F-statistic: 292.7 on 10 and 8920 DF,  p-value: < 2.2e-16
 
 ``` r
-tidy(model_avg)
+yoe_df <- length_df %>%
+  drop_na(earliest_date) %>%
+  mutate(yoe = year(filing_date)-year(earliest_date))
+
+yoe_df %>%
+  group_by(yoe) %>%
+  summarize(y = mean(app_length)) %>%
+  ggplot(aes(x = as.factor(yoe), y = y)) +
+  geom_col(fill = "lightgreen", color="black") +
+  labs(x = "Years of Experience", y = "Average decision time") +
+  ggtitle("Average processing time by years of experience") +
+  theme_minimal()
 ```
 
-    ## # A tibble: 10 × 5
-    ##    term                        estimate std.error statistic   p.value
-    ##    <chr>                          <dbl>     <dbl>     <dbl>     <dbl>
-    ##  1 (Intercept)                    980.      10.5      93.3  0        
-    ##  2 as.factor(tc)1700               26.2      9.20      2.85 4.37e-  3
-    ##  3 as.factor(tc)2100              199.       9.33     21.4  7.10e- 99
-    ##  4 as.factor(tc)2400              198.      10.3      19.2  7.37e- 81
-    ##  5 as.factor(gender)male          -20.6      7.05     -2.92 3.49e-  3
-    ##  6 as.factor(race)black           -28.6     18.2      -1.57 1.16e-  1
-    ##  7 as.factor(race)Hispanic        -27.3     16.7      -1.64 1.02e-  1
-    ##  8 as.factor(race)other           297.     149.        1.99 4.68e-  2
-    ##  9 as.factor(race)white           -11.1      7.59     -1.46 1.44e-  1
-    ## 10 as.factor(disposal_type)ISS    187.       6.29     29.8  1.37e-185
+![](Final-Project_files/figure-gfm/years-of-experience-1.png)<!-- -->
 
 ``` r
-tidy(model_avg_wt)
+yoe_reg <- yoe_df %>%
+  group_by(examiner_id, disposal_type,yoe) %>%
+  summarize(
+    gender= first(gender),
+    race = first(race),
+    tc = first(tc),
+    avg_length = mean(app_length),
+    tenure = first(tenure_days)
+  )
 ```
 
-    ## # A tibble: 11 × 5
-    ##    term                        estimate std.error statistic   p.value
-    ##    <chr>                          <dbl>     <dbl>     <dbl>     <dbl>
-    ##  1 (Intercept)                 658.      14.2        46.2   0        
-    ##  2 as.factor(tc)1700            58.9      8.82        6.68  2.56e- 11
-    ##  3 as.factor(tc)2100           243.       8.98       27.0   1.63e-154
-    ##  4 as.factor(tc)2400           284.      10.1        28.0   9.72e-166
-    ##  5 as.factor(gender)male       -18.2      6.70       -2.71  6.68e-  3
-    ##  6 as.factor(race)black        -32.7     17.3        -1.89  5.93e-  2
-    ##  7 as.factor(race)Hispanic      -1.93    15.8        -0.122 9.03e-  1
-    ##  8 as.factor(race)other        245.     142.          1.73  8.39e-  2
-    ##  9 as.factor(race)white         -9.30     7.22       -1.29  1.98e-  1
-    ## 10 as.factor(disposal_type)ISS 184.       5.99       30.8   3.29e-198
-    ## 11 tenure                        0.0603   0.00190    31.7   5.53e-209
+    ## `summarise()` has grouped output by 'examiner_id', 'disposal_type'. You can
+    ## override using the `.groups` argument.
 
 ``` r
-stargazer(model_avg, type="text")
+model_yoe_af <- lm(data = yoe_reg, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type) + as.factor(yoe))
+
+model_yoe <- lm(data = yoe_reg, avg_length ~ as.factor(tc) + as.factor(gender) + as.factor(race) + as.factor(disposal_type) + yoe)
+
+summary(model_yoe_af)
 ```
 
     ## 
-    ## =======================================================
-    ##                                 Dependent variable:    
-    ##                             ---------------------------
-    ##                                     avg_length         
-    ## -------------------------------------------------------
-    ## as.factor(tc)1700                    26.227***         
-    ##                                       (9.199)          
-    ##                                                        
-    ## as.factor(tc)2100                   199.471***         
-    ##                                       (9.334)          
-    ##                                                        
-    ## as.factor(tc)2400                   197.734***         
-    ##                                      (10.278)          
-    ##                                                        
-    ## as.factor(gender)male               -20.584***         
-    ##                                       (7.045)          
-    ##                                                        
-    ## as.factor(race)black                  -28.593          
-    ##                                      (18.191)          
-    ##                                                        
-    ## as.factor(race)Hispanic               -27.258          
-    ##                                      (16.661)          
-    ##                                                        
-    ## as.factor(race)other                 296.641**         
-    ##                                      (149.171)         
-    ##                                                        
-    ## as.factor(race)white                  -11.095          
-    ##                                       (7.590)          
-    ##                                                        
-    ## as.factor(disposal_type)ISS         187.205***         
-    ##                                       (6.292)          
-    ##                                                        
-    ## Constant                            980.221***         
-    ##                                      (10.510)          
-    ##                                                        
-    ## -------------------------------------------------------
-    ## Observations                           8,973           
-    ## R2                                     0.162           
-    ## Adjusted R2                            0.161           
-    ## Residual Std. Error             297.980 (df = 8963)    
-    ## F Statistic                  192.597*** (df = 9; 8963) 
-    ## =======================================================
-    ## Note:                       *p<0.1; **p<0.05; ***p<0.01
+    ## Call:
+    ## lm(formula = avg_length ~ as.factor(tc) + as.factor(gender) + 
+    ##     as.factor(race) + as.factor(disposal_type) + as.factor(yoe), 
+    ##     data = yoe_reg)
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1584.4  -307.3   -21.0   247.7  4380.0 
+    ## 
+    ## Coefficients:
+    ##                              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                  1658.344      8.444 196.385  < 2e-16 ***
+    ## as.factor(tc)1700            -135.796      5.129 -26.477  < 2e-16 ***
+    ## as.factor(tc)2100              19.007      5.513   3.448 0.000566 ***
+    ## as.factor(tc)2400             127.806      5.747  22.239  < 2e-16 ***
+    ## as.factor(gender)male         -26.522      4.062  -6.530 6.63e-11 ***
+    ## as.factor(race)black          -17.554     10.309  -1.703 0.088623 .  
+    ## as.factor(race)Hispanic       -59.115     10.224  -5.782 7.41e-09 ***
+    ## as.factor(race)other          241.599     69.546   3.474 0.000513 ***
+    ## as.factor(race)white          -23.250      4.397  -5.287 1.25e-07 ***
+    ## as.factor(disposal_type)ISS   216.643      3.673  58.986  < 2e-16 ***
+    ## as.factor(yoe)1              -168.129      8.776 -19.158  < 2e-16 ***
+    ## as.factor(yoe)2              -228.488      8.765 -26.068  < 2e-16 ***
+    ## as.factor(yoe)3              -276.826      8.855 -31.263  < 2e-16 ***
+    ## as.factor(yoe)4              -333.945      8.967 -37.240  < 2e-16 ***
+    ## as.factor(yoe)5              -408.016      9.104 -44.819  < 2e-16 ***
+    ## as.factor(yoe)6              -476.806      9.251 -51.544  < 2e-16 ***
+    ## as.factor(yoe)7              -545.030      9.395 -58.013  < 2e-16 ***
+    ## as.factor(yoe)8              -635.691      9.541 -66.626  < 2e-16 ***
+    ## as.factor(yoe)9              -727.608      9.739 -74.710  < 2e-16 ***
+    ## as.factor(yoe)10             -825.008     10.026 -82.289  < 2e-16 ***
+    ## as.factor(yoe)11             -915.887     10.385 -88.190  < 2e-16 ***
+    ## as.factor(yoe)12             -984.030     10.971 -89.695  < 2e-16 ***
+    ## as.factor(yoe)13            -1021.815     11.691 -87.400  < 2e-16 ***
+    ## as.factor(yoe)14            -1107.533     12.633 -87.673  < 2e-16 ***
+    ## as.factor(yoe)15            -1269.512     14.369 -88.349  < 2e-16 ***
+    ## as.factor(yoe)16            -1464.788     19.577 -74.820  < 2e-16 ***
+    ## as.factor(yoe)17            -1698.160    183.778  -9.240  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 519.4 on 80212 degrees of freedom
+    ## Multiple R-squared:  0.3292, Adjusted R-squared:  0.329 
+    ## F-statistic:  1514 on 26 and 80212 DF,  p-value: < 2.2e-16
 
 ``` r
-stargazer(model_avg_wt, type="text")
+summary(model_yoe)
 ```
 
     ## 
-    ## =======================================================
-    ##                                 Dependent variable:    
-    ##                             ---------------------------
-    ##                                     avg_length         
-    ## -------------------------------------------------------
-    ## as.factor(tc)1700                    58.878***         
-    ##                                       (8.816)          
-    ##                                                        
-    ## as.factor(tc)2100                   242.681***         
-    ##                                       (8.985)          
-    ##                                                        
-    ## as.factor(tc)2400                   284.441***         
-    ##                                      (10.148)          
-    ##                                                        
-    ## as.factor(gender)male               -18.186***         
-    ##                                       (6.703)          
-    ##                                                        
-    ## as.factor(race)black                 -32.660*          
-    ##                                      (17.317)          
-    ##                                                        
-    ## as.factor(race)Hispanic               -1.928           
-    ##                                      (15.836)          
-    ##                                                        
-    ## as.factor(race)other                 244.716*          
-    ##                                      (141.567)         
-    ##                                                        
-    ## as.factor(race)white                  -9.299           
-    ##                                       (7.217)          
-    ##                                                        
-    ## as.factor(disposal_type)ISS         184.434***         
-    ##                                       (5.986)          
-    ##                                                        
-    ## tenure                               0.060***          
-    ##                                       (0.002)          
-    ##                                                        
-    ## Constant                            657.541***         
-    ##                                      (14.239)          
-    ##                                                        
-    ## -------------------------------------------------------
-    ## Observations                           8,931           
-    ## R2                                     0.247           
-    ## Adjusted R2                            0.246           
-    ## Residual Std. Error             282.772 (df = 8920)    
-    ## F Statistic                 292.671*** (df = 10; 8920) 
-    ## =======================================================
-    ## Note:                       *p<0.1; **p<0.05; ***p<0.01
+    ## Call:
+    ## lm(formula = avg_length ~ as.factor(tc) + as.factor(gender) + 
+    ##     as.factor(race) + as.factor(disposal_type) + yoe, data = yoe_reg)
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1568.9  -308.1   -22.2   252.1  4415.4 
+    ## 
+    ## Coefficients:
+    ##                              Estimate Std. Error  t value Pr(>|t|)    
+    ## (Intercept)                 1624.4228     6.5866  246.625  < 2e-16 ***
+    ## as.factor(tc)1700           -135.5656     5.1386  -26.382  < 2e-16 ***
+    ## as.factor(tc)2100             19.3059     5.5240    3.495 0.000475 ***
+    ## as.factor(tc)2400            129.8567     5.7556   22.562  < 2e-16 ***
+    ## as.factor(gender)male        -26.2794     4.0702   -6.457 1.08e-10 ***
+    ## as.factor(race)black         -17.4412    10.3311   -1.688 0.091372 .  
+    ## as.factor(race)Hispanic      -58.9434    10.2456   -5.753 8.80e-09 ***
+    ## as.factor(race)other         240.6325    69.6927    3.453 0.000555 ***
+    ## as.factor(race)white         -23.4009     4.4065   -5.310 1.10e-07 ***
+    ## as.factor(disposal_type)ISS  215.2188     3.6774   58.525  < 2e-16 ***
+    ## yoe                          -78.3010     0.4312 -181.605  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 520.6 on 80228 degrees of freedom
+    ## Multiple R-squared:  0.3262, Adjusted R-squared:  0.3261 
+    ## F-statistic:  3884 on 10 and 80228 DF,  p-value: < 2.2e-16
+
+``` r
+tidy(model_yoe_af)
+```
+
+    ## # A tibble: 27 × 5
+    ##    term                        estimate std.error statistic   p.value
+    ##    <chr>                          <dbl>     <dbl>     <dbl>     <dbl>
+    ##  1 (Intercept)                   1658.       8.44    196.   0        
+    ##  2 as.factor(tc)1700             -136.       5.13    -26.5  8.30e-154
+    ##  3 as.factor(tc)2100               19.0      5.51      3.45 5.66e-  4
+    ##  4 as.factor(tc)2400              128.       5.75     22.2  3.07e-109
+    ##  5 as.factor(gender)male          -26.5      4.06     -6.53 6.63e- 11
+    ##  6 as.factor(race)black           -17.6     10.3      -1.70 8.86e-  2
+    ##  7 as.factor(race)Hispanic        -59.1     10.2      -5.78 7.41e-  9
+    ##  8 as.factor(race)other           242.      69.5       3.47 5.13e-  4
+    ##  9 as.factor(race)white           -23.2      4.40     -5.29 1.25e-  7
+    ## 10 as.factor(disposal_type)ISS    217.       3.67     59.0  0        
+    ## # ℹ 17 more rows
